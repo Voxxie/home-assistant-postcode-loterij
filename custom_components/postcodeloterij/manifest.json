@@ -1,10 +1,12 @@
 {
   "domain": "postcodeloterij",
   "name": "Postcodeloterij",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "documentation": "https://github.dev/Voxxie/home-assistant-postcode-loterij",
+  "issue_tracker": "https://github.dev/Voxxie/home-assistant-postcode-loterij/issues",
   "requirements": ["python-dateutil"],
   "codeowners": ["@Voxxie"],
   "config_flow": true,
-  "iot_class": "cloud_polling"
+  "iot_class": "cloud_polling",
+  "icon": "mdi:trophy"
 }
