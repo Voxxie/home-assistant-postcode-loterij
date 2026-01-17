@@ -40,6 +40,11 @@ class PostcodeloterijSensor(Entity):
         self._period = None
 
     @property
+    def unique_id(self):
+        """Return a unique ID for this sensor."""
+        return f"postcodeloterij_{self._postcode}"
+
+    @property
     def name(self):
         return self._name
 
