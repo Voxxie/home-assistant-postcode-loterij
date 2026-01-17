@@ -6,25 +6,27 @@ Customer Home Assistant Component for Postcode Loterij
 
 
 
-Voorbeeld automatisering:
+Voorbeeld automatisering:  (vervang 1234AA door je eigen postcode)
 
 ```yaml
-- id: postcodeloterij
-  alias: "Postcodeloterij: Prijs"
-  initial_state: 'on'
-  trigger:
-    platform: time
-    at: '14:00:00'
-  condition:
-    - "{{ now().day == 2 }}"
-    - "{{ states('sensor.postcodeloterij_prijs') | int(0) > 0 }}"
-  action:
-    service: notify.all_devices
+alias: Postcode Loterij - Prijzen
+description: ""
+triggers:
+  - trigger: state
+    entity_id:
+      - sensor.postcodeloterij_periode_1234AA
+conditions:
+  - condition: numeric_state
+    entity_id: sensor.postcodeloterij_prijs_1234AA
+    above: 0
+actions:
+  - action: notify.all_devices
+    metadata: {}
     data:
-      title: "Postcodeloterij uitslag"
-      message: "Deze maand heb je {{ states('sensor.postcodeloterij_prijs') }}x prijs! Namelijk {{ state_attr('sensor.postcodeloterij_prijs', 'prizes') }}. Gefelicteerd!"
-      data:
-        ttl: 0
-        priority: high
-        tag: "postcodeloterij_{{ now().strftime('%Y_%m') }}"
+      title: Je hebt prijs in de Postcode Loterij!
+      message: >-
+        Deze maand heb je {{ states('sensor.postcodeloterij_prijs_1234AA') }}x
+        prijs! Namelijk {{ states('sensor.postcodeloterij_prijzen_1234AA') }}.
+        Gefelicteerd!
+mode: single
 ```

@@ -1,7 +1,7 @@
 {
   "domain": "postcodeloterij",
   "name": "Postcodeloterij",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "documentation": "https://github.dev/Voxxie/home-assistant-postcode-loterij",
   "requirements": ["python-dateutil"],
   "codeowners": ["@Voxxie"],
