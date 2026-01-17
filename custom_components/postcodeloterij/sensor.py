@@ -70,8 +70,8 @@ class PostcodeloterijSensor(Entity):
 
         # Determine correct month
         moment = datetime.today() - dateutil.relativedelta.relativedelta(months=1)
-        if moment.day < 8:
-            moment -= dateutil.relativedelta.relativedelta(months=1)
+        #if moment.day < 8:
+        #    moment -= dateutil.relativedelta.relativedelta(months=1)
 
         moment_fmt = moment.strftime("%Y%m")
         _LOGGER.debug("Selected moment: %s", moment_fmt)
