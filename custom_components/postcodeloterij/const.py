@@ -1,2 +1,2 @@
 DOMAIN = "postcodeloterij"
-CONF_POSTCODE = "postcode"
+CONF_POSTCODE = "Postcode"
