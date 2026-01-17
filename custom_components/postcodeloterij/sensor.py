@@ -40,7 +40,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 
 # ---------------------------------------------------------
-# SHARED FETCHER (1 API CALL VOOR ALLE SENSOREN)
+# SHARED FETCHER (1 API CALL VOOR ALL SENSORS)
 # ---------------------------------------------------------
 
 class PostcodeLoterijFetcher:
@@ -53,10 +53,8 @@ class PostcodeLoterijFetcher:
     def update(self):
         """Fetch data from the Postcodeloterij API."""
         moment = datetime.today() - dateutil.relativedelta.relativedelta(months=1)
-        if moment.day < 8:
-            moment -= dateutil.relativedelta.relativedelta(months=1)
-
         moment_fmt = moment.strftime("%Y%m")
+        
         url = _RESOURCE % moment_fmt
 
         try:
@@ -81,7 +79,7 @@ class PostcodeLoterijFetcher:
 
 
 # ---------------------------------------------------------
-# BASE SENSOR MET DEVICE INFO
+# BASE SENSOR WITH DEVICE INFO
 # ---------------------------------------------------------
 
 class BasePostcodeloterijSensor(Entity):
@@ -106,7 +104,7 @@ class BasePostcodeloterijSensor(Entity):
 
 
 # ---------------------------------------------------------
-# SENSOR 1: AANTAL PRIJZEN
+# SENSOR 1: NUMBER OF PRICES WON
 # ---------------------------------------------------------
 
 class PostcodeloterijPrizeCountSensor(BasePostcodeloterijSensor):
@@ -131,7 +129,7 @@ class PostcodeloterijPrizeCountSensor(BasePostcodeloterijSensor):
 
 
 # ---------------------------------------------------------
-# SENSOR 2: LIJST MET PRIJZEN
+# SENSOR 2: LIST WITH PRICES
 # ---------------------------------------------------------
 
 class PostcodeloterijPrizeListSensor(BasePostcodeloterijSensor):
