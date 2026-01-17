@@ -1,12 +1,22 @@
-# home-assistant-postcode-loterij
-Customer Home Assistant Component for Postcode Loterij
+# Postcode Loterij Integration
+Custom Home Assistant Component for Postcode Loterij
+
+
+- Add the repository to HACS.
+- Install the integration via HACS.
+- Configure the integration via Home Assistant Configuration > Integrations.
+- Restart Home Assistant.
+
+It will generate sensors for your postal code, such as:
+- sensor.postcodeloterij_prijs_<your_postcode>
+- sensor.postcodeloterij_prijzen_<your_postcode>
+- sensor.postcodeloterij_periode_<your_postcode>
+##
 
 
 
 
-
-
-Voorbeeld automatisering:  (vervang 1234AA door je eigen postcode)
+Example automation (replace 1234AA with your own postalcode)
 
 ```yaml
 alias: Postcode Loterij - Prijzen
