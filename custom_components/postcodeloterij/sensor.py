@@ -1,11 +1,10 @@
 import logging
-from datetime import datetime, timedelta
-import dateutil.relativedelta
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import requests
 
 from homeassistant.helpers.entity import Entity
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, CONF_POSTCODE
 
@@ -15,46 +14,26 @@ _RESOURCE = (
     "https://www.postcodeloterij.nl/public/rest/drawresults/winnings/NPL/P_MT_P%s/?resultSize=10"
 )
 
-SCAN_INTERVAL = timedelta(minutes=30)
-
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
-    """Set up Postcodeloterij sensors from config entry."""
-    postcode = entry.data[CONF_POSTCODE]
-
-    # Shared fetcher instance
-    fetcher = PostcodeLoterijFetcher(postcode)
-
-    sensors = [
-        PostcodeloterijPrizeCountSensor(postcode, fetcher),
-        PostcodeloterijPrizeListSensor(postcode, fetcher),
-        PostcodeloterijPeriodSensor(postcode, fetcher),
-    ]
-
-    # Register sensors so the refresh service can update them
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN].setdefault("entities", [])
-    hass.data[DOMAIN]["entities"].extend(sensors)
-
-    async_add_entities(sensors, True)
-
 
 # ---------------------------------------------------------
-# SHARED FETCHER (1 API CALL VOOR ALL SENSORS)
+# FETCHER (async wrapper)
 # ---------------------------------------------------------
 
 class PostcodeLoterijFetcher:
-    """Shared data fetcher so we only call the API once."""
+    """Shared fetcher used by the coordinator."""
 
-    def __init__(self, postcode):
+    def __init__(self, hass, postcode):
+        self.hass = hass
         self.postcode = postcode
         self.data = None
 
-    def update(self):
-        """Fetch data from the Postcodeloterij API."""
-        moment = datetime.today() - dateutil.relativedelta.relativedelta(months=1)
+    def _sync_update(self):
+        """Synchronous API call executed in executor."""
+        moment = datetime.today() - relativedelta(months=1)
+        if moment.day < 8:
+            moment -= relativedelta(months=1)
+
         moment_fmt = moment.strftime("%Y%m")
-        
         url = _RESOURCE % moment_fmt
 
         try:
@@ -74,20 +53,26 @@ class PostcodeLoterijFetcher:
             self.data["period"] = moment.strftime("%m-%Y")
 
         except Exception as ex:
-            _LOGGER.error("Error fetching data: %s", ex)
+            _LOGGER.error("Error fetching Postcodeloterij data: %s", ex)
             self.data = None
 
+        return self.data
+
+    async def update_async(self):
+        """Async wrapper."""
+        return await self.hass.async_add_executor_job(self._sync_update)
+
 
 # ---------------------------------------------------------
-# BASE SENSOR WITH DEVICE INFO
+# BASE SENSOR
 # ---------------------------------------------------------
 
-class BasePostcodeloterijSensor(Entity):
-    """Base class with shared device info."""
+class BasePostcodeloterijSensor(CoordinatorEntity, Entity):
+    """Base class for all sensors."""
 
-    def __init__(self, postcode, fetcher):
+    def __init__(self, coordinator, postcode):
+        super().__init__(coordinator)
         self._postcode = postcode
-        self.fetcher = fetcher
 
     @property
     def device_info(self):
@@ -97,10 +82,6 @@ class BasePostcodeloterijSensor(Entity):
             "manufacturer": "Postcodeloterij",
             "model": "Winnings API",
         }
-
-    def update(self):
-        """Trigger shared fetcher update."""
-        self.fetcher.update()
 
 
 # ---------------------------------------------------------
@@ -123,13 +104,12 @@ class PostcodeloterijPrizeCountSensor(BasePostcodeloterijSensor):
 
     @property
     def state(self):
-        if not self.fetcher.data:
-            return None
-        return self.fetcher.data.get("prizeCount")
+        data = self.coordinator.data
+        return data.get("prizeCount") if data else None
 
 
 # ---------------------------------------------------------
-# SENSOR 2: LIST WITH PRICES
+# SENSOR 2: lIST WITH PRICES WON
 # ---------------------------------------------------------
 
 class PostcodeloterijPrizeListSensor(BasePostcodeloterijSensor):
@@ -148,14 +128,15 @@ class PostcodeloterijPrizeListSensor(BasePostcodeloterijSensor):
 
     @property
     def state(self):
-        if not self.fetcher.data:
+        data = self.coordinator.data
+        if not data:
             return None
-        prizes = [p["description"] for p in self.fetcher.data.get("wonPrizes", [])]
+        prizes = [p["description"] for p in data.get("wonPrizes", [])]
         return ", ".join(prizes) if prizes else "Geen prijzen"
 
 
 # ---------------------------------------------------------
-# SENSOR 3: PERIODE
+# SENSOR 3: PERIOD
 # ---------------------------------------------------------
 
 class PostcodeloterijPeriodSensor(BasePostcodeloterijSensor):
@@ -174,6 +155,24 @@ class PostcodeloterijPeriodSensor(BasePostcodeloterijSensor):
 
     @property
     def state(self):
-        if not self.fetcher.data:
-            return None
-        return self.fetcher.data.get("period")
+        data = self.coordinator.data
+        return data.get("period") if data else None
+
+
+# ---------------------------------------------------------
+# SETUP ENTRY
+# ---------------------------------------------------------
+
+async def async_setup_entry(hass, entry, async_add_entities):
+    """Create sensors."""
+    data = hass.data[DOMAIN][entry.entry_id]
+    coordinator = data["coordinator"]
+    postcode = data["postcode"]
+
+    sensors = [
+        PostcodeloterijPrizeCountSensor(coordinator, postcode),
+        PostcodeloterijPrizeListSensor(coordinator, postcode),
+        PostcodeloterijPeriodSensor(coordinator, postcode),
+    ]
+
+    async_add_entities(sensors)

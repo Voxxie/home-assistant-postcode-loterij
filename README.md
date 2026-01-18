@@ -7,10 +7,15 @@ Custom Home Assistant Component for Postcode Loterij
 - Configure the integration via Home Assistant Configuration > Integrations.
 - Restart Home Assistant.
 
-It will generate sensors for your postal code, such as:
+It will generate sensors for your postcode, such as:
 - sensor.postcodeloterij_prijs_<your_postcode>
 - sensor.postcodeloterij_prijzen_<your_postcode>
 - sensor.postcodeloterij_periode_<your_postcode>
+
+
+It updates dynamically based on the current period of the Postcode Loterij.
+We will check every hour for new prizes in a new period, when the period is published the update timer will adjust to a refresh of every 6 hours.
+
 ##
 
 
